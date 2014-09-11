@@ -1,0 +1,8 @@
+# drought data
+
+stations in CA
+look at it over time?
+
+```{r}
+
+```
