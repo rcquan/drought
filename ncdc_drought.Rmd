@@ -1,0 +1,13 @@
+# drought data
+```{r}
+```{r, eval = FALSE}
+filename <- "ish-history.txt"
+if (!file.exists(filename) {
+    download.file("ftp://ftp.ncdc.noaa.gov/pub/data/noaa/ish-history.txt", destfile = "ish-history.txt")
+    setwd("C:/Users/knarf/Desktop")
+    unzipped <- unzip("Physician_Compare_Databases.zip", file = "Physician_Compare_Databases/National_Downloadable_File.csv")
+    phys <- read.csv(unzipped, stringsAsFactors = FALSE)
+    }
+}
+
+```
