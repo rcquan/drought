@@ -13,9 +13,14 @@ library(stringr)
 library(GEOquery)
 
 
-setwd("/Users/Quan/GitHub/drought/")
+dir_base <- "/Users/Quan/Github/drought"
+dir_data <- sprintf("%s/data", dir_base)
+dir_java <- sprintf("%s/ishJava", dir_base)
 
+setwd(dir_base)
 dir.create("data")
+dir.create("ishJava")
+
 baseURL <- "ftp://ftp.ncdc.noaa.gov/pub/data/noaa/2014/"
 
 #############################
@@ -43,7 +48,7 @@ file <- df_ca$file
 url <- df_ca$url
 
 # get data from NOAA website
-setwd("data")
+setwd(dir_data)
 dwnld_errors <- vector()
 for(i in 1:length(file)){
     if(!file.exists(file)){
@@ -56,7 +61,7 @@ for(i in 1:length(file)){
 }
 
 #############################
-# DATA PROCESSING
+# FILE PROCESSING
 #############################
 
 # get list of files in directory
@@ -64,5 +69,33 @@ zip_file <- list.files(pattern = ".gz")
 # unzip the .gz file
 sapply(zip_file, gunzip)
 
+file <- list.files(pattern = "[^.gz]")
+file <- list.files(pattern = "[^.class]")
 
-#-------JAVA CODE HERE ---------#
+
+# runs java from command line to convert to
+# abbreviated ISH format
+setwd(dir_data)
+
+for(i in file){
+    input <- sprintf("%s", i)
+    output <- sprintf("%s.out", i)
+    if(!file.exists(output)){
+        system(sprintf("java -classpath . ishJava %s %s.out", input, output))   
+    }
+}
+
+#############################
+# READING DATA
+#############################
+
+# get all files with extension
+file_list <- as.list(list.files(pattern = ".out"))
+
+# preallocate list and load data
+data_list <- vector("list", length = length(file_list))
+data_list <- lapply(file_list, read.table, sep = "\t")
+
+
+
+
