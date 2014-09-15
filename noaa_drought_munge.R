@@ -16,12 +16,10 @@ library(GEOquery)
 dir_base <- "/Users/Quan/Github/drought"
 dir_data <- sprintf("%s/data", dir_base)
 dir_java <- sprintf("%s/ishJava", dir_base)
+baseURL <- "ftp://ftp.ncdc.noaa.gov/pub/data/noaa/2014/"
 
 setwd(dir_base)
 dir.create("data")
-dir.create("ishJava")
-
-baseURL <- "ftp://ftp.ncdc.noaa.gov/pub/data/noaa/2014/"
 
 #############################
 # DOWNLOADING THE DATA
@@ -49,14 +47,19 @@ url <- df_ca$url
 
 # get data from NOAA website
 setwd(dir_data)
-dwnld_errors <- vector()
 for(i in 1:length(file)){
-    if(!file.exists(file)){
+    if(!file.exists(file[i])){
         # ERROR HANDLING
-        tryCatch({
-            download.file(url[i], file[i])
-            # line unable to read in data to dwnld_errors
-        }, error = function(e){dwnld_errors <- append(dwnld_errors, file[i])})
+        tryCatch(
+            {
+                message(paste("Downloading", file[i]))
+                download.file(url[i], file[i])
+            }, 
+            # would like to add broken urls to vector ****
+            error = function(e){
+                message(paste("URL does not seem to exist:", file[i]))
+            }
+        )
     } 
 }
 
@@ -66,22 +69,20 @@ for(i in 1:length(file)){
 
 # get list of files in directory
 zip_file <- list.files(pattern = ".gz")
-# unzip the .gz file
+# unzip the .gz file, output to .txt
 sapply(zip_file, gunzip)
-
-file <- list.files(pattern = "[^.gz]")
-file <- list.files(pattern = "[^.class]")
-
 
 # runs java from command line to convert to
 # abbreviated ISH format
 setwd(dir_data)
 
+file <- list.files(pattern = "[^.gz]") 
+
 for(i in file){
     input <- sprintf("%s", i)
     output <- sprintf("%s.out", i)
     if(!file.exists(output)){
-        system(sprintf("java -classpath . ishJava %s %s.out", input, output))   
+        system(sprintf("java -classpath . ishJava %s %s", input, output))   
     }
 }
 
@@ -91,11 +92,13 @@ for(i in file){
 
 # get all files with extension
 file_list <- as.list(list.files(pattern = ".out"))
-
 # preallocate list and load data
 data_list <- vector("list", length = length(file_list))
-data_list <- lapply(file_list, read.table, sep = "\t")
 
+read_list <- function (X) {
+    # reads table into list, returns null upon error
+    return(tryCatch(read.table(X), error=function(e) NULL))
+}
 
-
+data_list <- lapply(file_list, read_list)
 
